@@ -1,0 +1,48 @@
+{% extends "get_together/base.html" %}
+{% load static tz i18n %}
+
+{% block styles %}
+    <link href="{% static 'css/bootstrap-album.css' %}" rel="stylesheet"/>
+
+{% endblock %}
+
+{% block content %}
+        <div class="container">
+            <div class="col-12 text-center mb-2">
+                <div class="btn-group" role="group">
+                  <a class="btn {% if not request.user.is_authenticated %}disabled {% endif %}{% if active == 'my'  %}btn-primary{% else %}btn-secondary{% endif %}" href="{% url 'events' %}">{% trans "My Events" %}</a>
+                  <a class="btn {% if active == 'all' %}btn-primary{% else %}btn-secondary{% endif %}" href="{% url 'all-events' %}">{% trans "All Events" %}</a>
+                </div>
+            </div>
+          <div class="row">
+{% for event in events_list %}
+            <div class="col-md-4">
+              <div class="card mb-4 box-shadow">
+                <div class="card-banner">
+                  <a href="{{ event.get_absolute_url }}">
+                  <img class="card-img-top" src="{{event.team.card_img_url}}" alt="{{event.name}}">
+                  <p class="card-title">{{event.name}}</p>
+                  </a>
+                </div>
+                <div class="card-body">
+                  <p class="card-text"><strong>{{event.team.name}}</strong></p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">{{ event.local_start_time }}{% if event.place %}<br/>{{event.place.city.short_name}}{% endif %}</small>
+                    <div class="btn-group">
+                        <a class="btn btn-primary" href="{{ event.get_absolute_url }}">{% trans "View" %}</a></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+{% endfor %}
+        </div>
+        <div class="row">
+            <div class="col">
+                <br/><a href="{% url 'create-event-team-select' %}" class="btn btn-success"><i class="far fa-calendar-plus">&nbsp;</i>{% trans "Host a Get Together" %}</a>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+

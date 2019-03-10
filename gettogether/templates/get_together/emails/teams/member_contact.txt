@@ -1,0 +1,11 @@
+{% extends 'get_together/emails/base.txt' %}
+{% block content %}
+== Message from {{team.name}} ==
+
+Sender: {{ sender }}
+
+{{ body|striptags }}
+
+Team page: https://{{site.domain}}{% url 'show-team' team.id %}
+
+{% endblock %}

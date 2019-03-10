@@ -1,0 +1,191 @@
+{% extends "get_together/base.html" %}
+{% load markup static i18n %}
+
+{% block add_to_totle %} | {{common_event.name}}{% endblock %}
+
+{% block meta %}
+  <meta property="og:url"           content="{{common_event.get_full_url}}" />
+  <meta property="og:type"          content="website" />
+  <meta property="og:title"         content="{{common_event.name}}" />
+  <meta property="og:description"   content="{{common_event.summary}}" />
+  <meta property="og:image"         content="{{ common_event.full_img_url }}" />
+{% endblock %}
+
+{% block styles %}
+    <link href="{% static 'css/bootstrap-album.css' %}" rel="stylesheet"/>
+    <style>
+.gt-profile {
+    position: relative;
+}
+.gt-profile .gt-profile-badges {
+    position: absolute;
+    top: 16px;
+    left: 6px;
+}
+.table td, .table th {
+    border-top: none;
+}
+    </style>
+{% endblock %}
+
+{% block scripts %}
+{% if not request.user.profile.do_not_track %}
+{% if settings.SOCIAL_AUTH_FACEBOOK_KEY %}
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId            : '{{settings.SOCIAL_AUTH_FACEBOOK_KEY}}',
+      autoLogAppEvents : true,
+      xfbml            : true,
+      version          : 'v2.12'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "https://connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+
+   function shareFacebook() {
+        FB.ui({
+          display: 'popup',
+          method: 'share',
+          href: '{{common_event.get_full_url}}',
+          quote: 'I\'m having a Get Together!\n\n{{common_event.name|jsencode}}',
+          hashtag: '#gettogether',
+          summary: "Let's have a Get Together!"
+        }, function(response){});
+   }
+</script>
+{% endif %}
+
+{% if settings.SOCIAL_AUTH_TWITTER_KEY %}
+<script>window.twttr = (function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0],
+    t = window.twttr || {};
+  if (d.getElementById(id)) return t;
+  js = d.createElement(s);
+  js.id = id;
+  js.src = "https://platform.twitter.com/widgets.js";
+  fjs.parentNode.insertBefore(js, fjs);
+
+  t._e = [];
+  t.ready = function(f) {
+    t._e.push(f);
+  };
+
+  return t;
+}(document, "script", "twitter-wjs"));
+</script>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="fluid-container container-primary">
+    <div class="row">
+        <div class="col-md-9">
+            {% if can_edit_event %}
+            <div id="admin_buttons" class="mb-2">
+                <a href="{% url 'edit-common-event' common_event.id %}" class="btn btn-secondary btn-sm"><i class="fa fa-edit"></i> {% trans "Edit Event" %}</a>
+            </div>
+            {% endif %}
+            {% if common_event.organization.banner_img %}
+            <div class="team-banner mb-3">
+                <img class="card-img-top" src="{{ common_event.organization.banner_img.url }}" alt="{{common_event.organization.name}}'s cover image" height="200px" width="825px">
+                <h2 class="team-title">{{ common_event.name }}</h2>
+            </div>
+            {% else %}
+            <h2>{{ common_event.name }}</h2>
+            {% endif %}
+
+            <div class="mb-2">
+                {% if not request.user.profile.do_not_track %}
+                {% if settings.SOCIAL_AUTH_TWITTER_KEY %}
+                    <a href="https://twitter.com/intent/tweet?text=I'm+having+a+get+together!%0D{{common_event.name|urlencode}}&original_referer={{common_event.get_full_url|urlencode}}&url={{common_event.get_full_url|urlencode}}&hashtags=gettogether" data-size="large" class="btn btn-twitter btn-sm"><i class="fab fa-twitter"></i> {% trans "Tweet" %}</a>
+                {% endif %}
+                {% if settings.SOCIAL_AUTH_FACEBOOK_KEY %}
+                    <a href="#" onClick="shareFacebook();" class="btn btn-facebook btn-sm"><i class="fab fa-facebook"></i> {% trans "Share" %}</a>
+                {% endif %}
+                {% endif %}
+            </div>
+
+
+            <div class="container container-secondary mb-3">
+            <p class="text-muted">{% trans "Organized by" %} <a href="{% url "show-org" common_event.organization.slug %}">{{ common_event.organization.name }}</a></p>
+            {% if common_event.summary %}
+                <p>{{ common_event.summary|markdown }}</p>
+            {% endif %}
+            </div>
+
+            <div class="container container-secondary mb-3">
+            <table class="table">
+            <tr>
+	            <td><b>{% trans "Date:" %}</b></td><td>{{ common_event.start_time }} - {{ common_event.end_time }}</td>
+            </tr>
+            <tr>
+	            <td><b>{% trans "Location:" %}</b></td><td>{{ common_event.location }}</td>
+            </tr>
+            {% if common_event.place %}
+            <tr>
+	            <td><b>{% trans "Place:" %}</b></td><td>
+                          <a class="" href="{% url 'show-place' common_event.place.id %}">{{ common_event.place.name }}</a>
+	            </td>
+            </tr>
+            {% endif %}
+            {% if common_event.web_url %}
+            <tr>
+	            <td><b>{% trans "Website:" %}</b></td><td><a href="{{ common_event.web_url }}" target="_blank">{{ common_event.web_url }}</a></td>
+            </tr>
+            {% endif %}
+            {% if common_event.announce_url %}
+            <tr>
+	            <td><b>{% trans "Announcement:" %}</b></td><td><a href="{{ common_event.announce_url }}" target="_blank">{{ common_event.announce_url }}</a></td>
+            </tr>
+            {% endif %}
+            </table>
+            </div>
+
+            <div class="container container-secondary mb-3">
+                <div class="row">
+                    <div class="col"><h4>{% trans "Participating Teams" %}</h4></div>
+                </div>
+                <div class="row">
+                {% for event in participating_events %}
+                    <div class="col-md-4">
+                      <div class="card mb-4 box-shadow">
+                        <div class="card-banner">
+                          <a href="{{ event.get_absolute_url }}">
+                          <img class="card-img-top" src="{{event.team.card_img_url}}" alt="{{event.name}}">
+                          <p class="card-title">{{event.team.name}}</p>
+                          </a>
+                        </div>
+                        <div class="card-body">
+                          <p class="card-text"><strong><a class="card-link" href="{{event.get_absolute_url}}">{{event.name}}</a></strong></p>
+                          <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ event.local_start_time }}</small>
+                            <div class="btn-group">
+                                <a class="btn btn-primary" href="{{ event.get_absolute_url }}">{% trans "View" %}</a></span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                {% endfor %}
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <a href="{% url 'create-common-event-team-select' common_event.id %}" class="btn btn-success">{% trans "Host an event" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+

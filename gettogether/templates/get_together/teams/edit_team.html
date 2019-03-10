@@ -1,0 +1,43 @@
+{% extends "get_together/base.html" %}
+{% load static i18n %}
+
+{% block content %}
+<h2>{% blocktrans with team_name=team.name %}Update {{team_name}}{% endblocktrans %}</h2>
+<form action="{% url "edit-team" team.id %}" enctype="multipart/form-data" method="post">
+{% csrf_token %}
+{% include "events/team_form.html" %}
+	<br />
+<button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+</form>
+<a href="{% url 'delete-team' team.id %}" class="btn btn-danger">{% trans "Delete" %}</a>
+{% endblock %}
+
+{% block javascript %}
+<script src="{% static 'js/jquery-ui-lookup.js' %}"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+    $("#city_select").lookup({
+        search: function(searchText, callback) {
+            if (searchText.length < 3) return callback(searchText, []);
+            $.getJSON("/api/cities/?q="+searchText, function(data) {
+                var m = this.url.match(/q=([^&]+)/);
+                var q = "";
+                if (m && m.length > 0) {
+                    q = this.url.match(/q=([^&]+)/)[1]
+                }
+
+                return callback(q, data);
+            });
+        },
+        select: function( event, ui ) {
+          $("#id_tz").val(ui.data.tz);
+          $("#id_tz").selectmenu("refresh");
+        }
+    });
+    $("#id_category").selectmenu();
+    $("#id_tz").selectmenu();
+});
+
+</script>
+
+{% endblock %}

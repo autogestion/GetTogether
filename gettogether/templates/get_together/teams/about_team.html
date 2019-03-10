@@ -1,0 +1,12 @@
+{% extends "get_together/teams/team_page_base.html" %}
+{% load static markup tz %}
+
+{% block about-button %}btn-default{% endblock %}
+
+{% block page_content %}
+            <div class="container container-secondary">
+                {{ team.about_page|markdown }}
+            </div>
+            <br/>
+{% endblock %}
+

@@ -1,0 +1,8 @@
+{% extends 'get_together/emails/base.txt' %}
+{% block content %}
+== Request Email Confirmation ==
+
+Please confirm this email address with GetTogether.Community by clicking on the link below:
+
+Confirm email: {{confirmation_url}}
+{% endblock %}

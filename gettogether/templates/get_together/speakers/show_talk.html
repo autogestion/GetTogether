@@ -1,0 +1,51 @@
+{% extends "get_together/base.html" %}
+{% load markup static i18n %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+            <h2>{{ talk.title }}
+                {% if talk.speaker.user == request.user.profile %}
+                <a href="{% url 'edit-talk' talk.id %}" class="btn btn-secondary btn-sm">{% trans "Edit Talk" %}</a>
+                {% endif %}
+            </h2>
+            <table class="table">
+            <tr>
+	            <td><b>{% trans "Speaker:" %}</b></td><td><a href="{% url 'show-speaker' talk.speaker.id %}">{{ talk.speaker }}</a></td>
+            </tr>
+            <tr>
+	            <td><b>{% trans "Category:" %}</b></td><td>{{ talk.category }}</td>
+            </tr>
+            {% if talk.web_url %}
+            <tr>
+	            <td><b>{% trans "Website:" %}</b></td><td><a href="{{ talk.web_url }}" target="_blank">{{ talk.web_url }}</a></td>
+            </tr>
+            {% endif %}
+            <tr>
+	            <td><b>{% trans "Abstract:" %}</b></td><td>{{ talk.abstract|markdown }}</td>
+            </tr>
+            </table>
+
+        </div>
+
+        <div class="col-md-3">
+            <div class="container">
+                <div class="row">
+                    <div class="col"><h4>{% trans "Events" %} ({{presentations.count}})</h4><hr/></div>
+                </div>
+                {% for presentation in presentations %}
+                <div class="row mb-3">
+                    <div class="col">
+                        <h6 class="mt-2 mb-0"><a href="{{presentation.event.get_absolute_url}}">{{presentation.event.name}}</a></h6>
+                        <small>{{ presentation.event.team }}</small><br/>
+                        <small class="text-muted">{{ presentation.event.local_start_time }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

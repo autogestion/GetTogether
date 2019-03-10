@@ -1,0 +1,20 @@
+{% extends "get_together/base.html" %}
+{% load static i18n %}
+
+
+{% block content %}
+<h2>{% trans "New Speaker Bio" %}</h2>
+
+
+<form enctype="multipart/form-data" action="{% url "add-speaker" %}" method="post">
+{% csrf_token %}
+<div class="form-group">
+    <table class="table">
+        <tr><th></th><td><img src="{% if speaker.headshot %}{{speaker.headshot.url}}{% endif %}"/></td></tr>
+        {{speaker_form}}
+    </table>
+	<br />
+<button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+</div>
+</form>
+{% endblock %}

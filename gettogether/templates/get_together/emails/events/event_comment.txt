@@ -1,0 +1,11 @@
+{% extends 'get_together/emails/base.txt' %}
+{% block content %}
+== Comment on {{comment.event.name|striptags}} ==
+
+By {{ comment.author }} - {{comment.created_time}}
+
+{{comment.body}}
+
+Click here to view this event: {{comment.event.get_full_url}}#comment-{{comment.id}}
+
+{% endblock %}

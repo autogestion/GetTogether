@@ -1,0 +1,371 @@
+{% extends "get_together/base.html" %}
+{% load markup static tz i18n %}
+
+{% block add_to_title %} | {{event.name}}{% endblock %}
+
+{% block meta %}
+  <meta property="og:url"           content="{{event.get_full_url}}" />
+  <meta property="og:type"          content="website" />
+  <meta property="og:title"         content="{{event.name}}" />
+  <meta property="og:description"   content="{{event.summary}}" />
+  <meta property="og:image"         content="{{event.team.full_img_url}}" />
+{% endblock %}
+
+{% block styles %}
+    <link href="{% static 'css/bootstrap-album.css' %}" rel="stylesheet"/>
+    <style>
+textarea {
+    box-sizing: border-box;
+    width: 100%;
+}
+    </style>
+{% endblock %}
+
+{% block scripts %}
+{% if not request.user.profile.do_not_track %}
+{% if settings.SOCIAL_AUTH_FACEBOOK_KEY %}
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId            : '{{settings.SOCIAL_AUTH_FACEBOOK_KEY}}',
+      autoLogAppEvents : true,
+      xfbml            : true,
+      version          : 'v2.12'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "https://connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+
+   function shareFacebook() {
+        FB.ui({
+          display: 'popup',
+          method: 'share',
+          href: '{{event.get_full_url}}',
+          quote: 'I\'m having a Get Together!\n\n{{event.name|jsencode}}',
+          hashtag: '#gettogether',
+          summary: "Let's have a Get Together!"
+        }, function(response){});
+   }
+</script>
+{% endif %}
+
+{% if settings.SOCIAL_AUTH_TWITTER_KEY %}
+<script>window.twttr = (function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0],
+    t = window.twttr || {};
+  if (d.getElementById(id)) return t;
+  js = d.createElement(s);
+  js.id = id;
+  js.src = "https://platform.twitter.com/widgets.js";
+  fjs.parentNode.insertBefore(js, fjs);
+
+  t._e = [];
+  t.ready = function(f) {
+    t._e.push(f);
+  };
+
+  return t;
+}(document, "script", "twitter-wjs"));
+</script>
+{% endif %}
+
+{% if settings.SOCIAL_AUTH_LINKEDIN_KEY %}
+<script type="text/javascript">
+
+  // Use the API call wrapper to share content on LinkedIn
+  function shareLinkedIn() {
+    //https://www.linkedin.com/cws/share?url=https%3A%2F%2Fdeveloper.linkedin.com%2Fetc%2Fdesigns%2Flinkedin%2Fkaty%2Fglobal%2Fclientlibs%2Fhtml%2Fsandbox.html%3Falign-class%3Dmiddle-center&original_referer=https%3A%2F%2Fdeveloper.linkedin.com%2Fetc%2Fdesigns%2Flinkedin%2Fkaty%2Fglobal%2Fclientlibs%2Fhtml%2Fsandbox.html%3Falign-class%3Dmiddle-center&token=&isFramed=true&lang=en_US&_ts=1525145063073.7769&xd_origin_host=https%3A%2F%2Fdeveloper.linkedin.com
+    // Build the JSON payload containing the content to be shared
+    window.open(
+    'https://www.linkedin.com/shareArticle?mini=true&url={{event.get_full_url|urlencode}}&summary={{event.name|urlencode}}&title=I\'m+having+a+Get+Together!&source=GetTogether.Community',
+    '_blank',
+    'height=300,width=400');
+  }
+
+</script>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="fluid-container container-primary">
+    <div class="row">
+        <div class="col-md-8 mb-3">
+            {% if team.banner_img %}
+            <div class="team-banner">
+                <img class="card-img-top" src="{{ team.banner_img.url }}" alt="{{team.name}}'s cover image" height="200px" width="825px">
+                <h2 class="team-title">{{ event.name }}{% if event.status == event.CANCELED %} ({% trans "Canceled" %}){% endif %}</h2>
+            </div>
+            {% else %}
+            <h2>{{ event.name }}</h2>
+            {% endif %}
+            {% if team.access == team.PERSONAL %}
+            <p class="text-muted">{% trans "Hosted by" %} <a href="{% url "show-profile" team.owner_profile.id %}">{{ team.owner_profile }}</a></p>
+            {% else %}
+            <p class="text-muted">{% trans "Hosted by" %} <a href="{% url "show-team-by-slug" team.slug %}">{{ team.name }}</a></p>
+            {% endif %}
+            {% if event.status != event.CANCELED and not request.user.profile.do_not_track %}
+                {% if settings.SOCIAL_AUTH_TWITTER_KEY %}
+                    <a id="twitterShareButton" href="https://twitter.com/intent/tweet?text=I'm+having+a+get+together!%0D{{event.name|urlencode}}&original_referer={{event.get_full_url|urlencode}}&url={{event.get_full_url|urlencode}}&hashtags=gettogether" data-size="large" class="btn btn-twitter btn-sm"><i class="fab fa-twitter"></i> {% trans "Tweet" %}</a>
+                {% endif %}
+                {% if settings.SOCIAL_AUTH_FACEBOOK_KEY %}
+                    <a id="facebookShareButton" href="#" onClick="shareFacebook();" class="btn btn-facebook btn-sm"><i class="fab fa-facebook"></i> {% trans "Share" %}</a>
+                {% endif %}
+                {% if settings.SOCIAL_AUTH_LINKEDIN_KEY %}
+                    <a id="linkedinShareButton" href="#" onClick="shareLinkedIn();" class="IN-widget btn btn-linkedin btn-sm"><i class="fab fa-linkedin"></i> {% trans "Share" %}</a>
+                {% endif %}
+            {% endif %}
+            {% if not event.is_over %}
+                {% if can_edit_team or is_email_confirmed %}
+                    <a href="{% url 'invite-attendees' event.id %}" class="btn btn-danger btn-sm"><i class="fa fa-envelope"></i> {% trans "Invite" %}</a>
+                {% endif %}
+                {% if not is_attending %}
+                    <div class="btn-group">
+                      <a id="attendEventButton" href="{% url 'attend-event' event.id %}?csrftoken={{csrf_token}}" class="btn btn-success btn-sm"><i class="fa fa-check-square-o"></i> {% trans "Attend" %}</a>
+                      <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="sr-only">Attendance options</span>
+                      </button>
+                      <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=maybe&csrftoken={{csrf_token}}">{% trans "Maybe" %}</a>
+                        <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=no&csrftoken={{csrf_token}}">{% trans "No" %}</a>
+                      </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+            {% if can_edit_event %}
+            <div class="btn-group dropdown">
+                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="editMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <a class="fa fa-edit">&nbsp;</a>{% trans "Edit" %}
+                </button>
+                <div class="dropdown-menu" aria-labelledby="editMenuButton">
+                        <a href="{% url 'edit-event' event.id %}" class="dropdown-item">{% trans "Event Details" %}</a>
+                        <a href="{% url 'change-team' event.id %}" class="dropdown-item">{% trans "Change Host" %}</a>
+                        <a href="{% url 'manage-event-sponsors' event.id %}" class="dropdown-item">{% trans "Manage Sponsors" %}</a>
+                        <a href="{% url 'schedule-event-talks' event.id %}" class="dropdown-item">{% trans "Manage Talks" %}</a>
+                        <a href="{% url 'manage-attendees' event.id %}" class="dropdown-item">{% trans "Manage Attendees" %}</a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if event.status == event.CANCELED %}
+            <p class="alerts">
+                <div class="alert alert-danger">{% trans "This event has been canceled." %}</div>
+            </p>
+            {% endif %}
+
+            {% if event.summary %}
+            <div class="container container-secondary mt-3">
+            <p>{{ event.summary|markdown }}</p>
+            </div>
+            {% endif %}
+
+            <div class="container container-secondary mt-3">
+            {% if event.parent %}
+            <div class="row mb-2">
+	            <div class="col-3" width="120px"><b>{% trans "Part of:" %}</b></div><div class="col-9"><a href="{{ event.parent.get_absolute_url }}" target="_blank">{{ event.parent.name }}</a></div>
+            </div>
+            {% endif %}
+            {% if event.series %}
+            <div class="row mb-2">
+	            <div class="col-3" width="120px"><b>{% trans "Repeats:" %}</b></div><div class="col-9"><a href="{{ event.series.get_absolute_url }}">
+                {% for rule in event.series.recurrences.rrules %}
+                {{rule.to_text|capfirst}}
+	            {% endfor %}</a>
+            </div>
+            </div>
+            {% endif %}
+            <div class="row mb-2">
+	            <div class="col-3" width="120px"><b>{% trans "Time:" %}</b></div><div class="col-9">{{ event.local_start_time }} - {{ event.local_end_time }}</div>
+            </div>
+            <div class="row mb-2">
+	            <div class="col-3" width="120px"><b>{% trans "Place:" %}</b></div><div class="col-9">
+                      {% if event.place %}
+                          <a class="" href="{% url 'show-place' event.place.id %}">{{ event.place.name }}</a>
+                          {% if can_edit_event %}<a href="{% url 'add-place' event.id %}" class="btn btn-secondary btn-sm"><i class="fa fa-globe-americas">&nbsp;</i>{% trans "Change" %}</a>{% endif %}
+                      {% elif can_edit_event %}
+                          <a class="" href="{% url 'add-place' event.id %}">{% trans "No place selected yet." %}</a>
+                      {% else %}
+                        {% trans "No place selected yet." %}
+                      {% endif %}
+	            </div>
+            </div>
+            {% if event.web_url %}
+            <div class="row mb-2">
+	            <div class="col-3" width="120px"><b>{% trans "Website:" %}</b></div><div class="col-9"><a href="{{ event.web_url }}" target="_blank">{{ event.web_url }}</a></div>
+            </div>
+            {% endif %}
+
+            {% if event.enable_presentations %}
+            <div class="row mb-2">
+	            <div class="col-3" width="120px"><b>{% trans "Presentations:" %}</b></div>
+                <div class="col-9">
+                    {% for presentation in presentation_list %}
+                        <div><a href="{% url 'show-talk' presentation.talk.id %}">{{presentation.talk.title}}</a> {% trans "by" context "{{talk}} by {{speaker}}"%} <a href="{% url 'show-speaker' presentation.talk.speaker.id %}">{{presentation.talk.speaker}}</a></div>
+                    {% endfor %}
+                    {% if not event.is_over %}
+                    <a class="btn btn-primary btn-sm" href="{% url 'propose-event-talk' event.id %}">{% trans "Propose a talk" %}</a>
+                    {% endif %}
+                    {% if pending_presentations and can_edit_event %}
+                    <a class="btn btn-success btn-sm" href="{% url 'schedule-event-talks' event.id %}">{% blocktrans count pending_presentations=pending_presentations %}{{pending_presentations}} proposed talk{% plural %}{{pending_presentations}} proposed talks{% endblocktrans %}</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            </div>
+
+            {% if event.enable_comments %}
+            <div class="container container-secondary mt-3">
+                <div class="row">
+                    <div class="col"><h4>{% trans "Comments" %}</h4></div>
+                </div>
+                <div class="row">
+                    {% load mptt_tags %}
+                    <ul class="col-md-10 list-group">
+                        {% recursetree event.comments.all %}
+                            <div id="comment-{{node.id}}" class="list-group-item flex-container">
+                              <div class="row w-100 ml-0">
+                                  <div class="w-100 d-flex justify-content-between">
+                                      <div class="media gt-profile">
+                                          <img class="mr-1 gt-profile-avatar" src="{{node.author.avatar_url}}" width="32px" height="32px">
+                                          <span class="gt-profile-badges">{% for badge in node.author.user.account.badges.all %}<img class="mr-0 gt-profile-badge" src="{{badge.img_url}}" title="{{badge.name}}" width="16px" height="16px">{% endfor %}</span>
+                                          <a href="{% url 'show-profile' node.author.id %}" title="{{node.author}}'s profile">{{node.author}}</a>
+                                      </div>
+                                      <span>{{ node.local_created_time }}</span>
+                                  </div>
+                              </div>
+                              <div class="row">
+                                  <div class="col ml-5">
+                                      <p style="white-space: pre-wrap;">{{ node.body }}</p>
+                                  </div>
+                              </div>
+                                {% if not node.is_leaf_node %}
+                                    <ul class="list-group children w-100 mt-1">
+                                        {{ children }}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        {% endrecursetree %}
+                        {% if request.user.is_authenticated %}
+                        <div class="pl-5">
+                        <form action="{% url 'comment-event' event.id %}" method="POST">
+                            {% csrf_token %}
+                            {{ comment_form.body }}
+                            <br/><button type="submit" class="btn btn-primary"><i class="pr-2 fa fa-comment"></i>{% trans "Comment" %}</button>
+                        </form>
+                        </div>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="container container-secondary mb-3">
+                {% if sponsor_count > 0 %}
+                <div class="row">
+                    <div class="col"><h4>{% trans "Sponsors" %}</h4><hr/></div>
+                </div>
+                {% for sponsor in sponsor_list %}
+                <div class="row mb-3">
+                    <div class="col">
+                        {% if sponsor.logo %}
+                            <a href="{{sponsor.web_url}}" target="_blank"><img src="{{sponsor.logo.url}}" alt="{{sponsor.name}} Logo" title="{{sponsor.name}}"></a>
+                        {% else %}
+                            <a href="{{sponsor.web_url}}" target="_blank">{{sponsor.name}}</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="container container-secondary mb-3">
+                {% endif %}
+                <div class="row">
+                    <div class="col"><h4>{% trans "Attendees" %} ({{attendee_count}})</h4></div>
+                </div>
+                {% for attendee in attendee_list %}
+                <div class="row mb-3">
+                    <div class="col media gt-profile">
+                        <img class="mr-1 gt-profile-avatar" src="{{attendee.user.avatar_url}}" width="32px" height="32px">
+                        <span class="gt-profile-badges">{% for badge in attendee.user.user.account.badges.all %}<img class="mr-0 gt-profile-badge" src="{{badge.img_url}}" title="{{badge.name}}" width="16px" height="16px">{% endfor %}</span>
+                        <div class="media-body">
+                        <h6 class="mt-2 mb-0">
+                          <a href="{% url 'show-profile' attendee.user.id %}" title="{{attendee.user}}'s profile">{{attendee.user}}</a>
+                          {% if attendee.user.user == request.user and not event.is_over %}
+                              {% if attendee.status == attendee.YES %}
+                                  <span class="badge badge-success dropdown-toggle align-top" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ attendee.status_name }}</span>
+                                  <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=maybe&csrftoken={{csrf_token}}">{% trans "Maybe" %}</a>
+                                    <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=no&csrftoken={{csrf_token}}">{% trans "No" %}</a>
+                                  </div>
+                              {% elif attendee.status == attendee.MAYBE %}
+                                  <span class="badge badge-default dropdown-toggle align-top" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ attendee.status_name }}</span>
+                                  <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=yes&csrftoken={{csrf_token}}">{% trans "Yes" %}</a>
+                                    <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=no&csrftoken={{csrf_token}}">{% trans "No" %}</a>
+                                  </div>
+                              {% elif attendee.status == attendee.NO %}
+                                  <span class="badge badge-danger dropdown-toggle align-top" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ attendee.status_name }}</span>
+                                  <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=yes&csrftoken={{csrf_token}}">{% trans "Yes" %}</a>
+                                    <a class="dropdown-item" href="{% url 'attend-event' event.id %}?response=maybe&csrftoken={{csrf_token}}">{% trans "Maybe" %}</a>
+                                  </div>
+                              {% endif %}
+                          {% else %}
+                              {% if attendee.status == attendee.YES %}
+                              <span class="badge badge-success align-top">{{ attendee.status_name }}</span>
+                              {% elif attendee.status == attendee.MAYBE %}
+                              <span class="badge badge-default align-top">{{ attendee.status_name }}</span>
+                              {% elif attendee.status == attendee.NO %}
+                              <span class="badge badge-danger align-top">{{ attendee.status_name }}</span>
+                              {% endif %}
+                          {% endif %}
+                        </h6>
+                        {% if attendee.role > 0 %}<small class="text-muted">{{ attendee.role_name }}</small>{% endif %}
+                      </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% if event.enable_photos %}
+            <div class="container container-secondary mb-3">
+                <div class="row">
+                    <div class="col"><h4>{% trans "Photos" %}</h4></div>
+                </div>
+                <div class="row">
+                {% for photo in event.photos.all %}
+                  <div class="card" style="max-width: 90%; margin-left: auto; margin-right: auto;">
+                    <div class="card-banner">
+                      <a href="{{photo.src.url}}" target="_blank">
+                      <img class="card-img-top" src="{{photo.thumbnail.url}}" alt="{{photo.title}}">
+                      </a>
+                    </div>
+                    <div class="card-body">
+                      <p class="card-text"><strong>{{photo.title}}</strong></p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted" style="width: 100%; word-break: break-word;overflow-x: hidden;">{{photo.caption}}</small>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+                </div>
+                {% if can_edit_event %}
+                <div class="row">
+                    <div class="col"><a class="btn btn-primary btn-sm" href="{% url 'add-event-photo' event.id %}"><i class="fa fa-upload"></i> {% trans "Upload" %}</a></div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

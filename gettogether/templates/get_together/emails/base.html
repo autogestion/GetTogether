@@ -1,0 +1,44 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Email from GetTogether.Community</title>
+
+    {% block meta %}{% endblock %}
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://gettogether.community{% static 'css/bootstrap/css/bootstrap.min.css' %}">
+    {%block styles %}{% endblock %}
+    <style>
+body {
+  padding-top: 5rem;
+}
+.starter-template {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+form {
+  display: inline;
+}
+    </style>
+
+  </head>
+  <body>
+
+    <nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse fixed-top">
+      <a class="navbar-brand" href="/">GetTogether</a>
+    </nav>
+
+    <main role="main" class="container">
+
+{% block content %}{% endblock %}
+
+	<hr>
+	<p>This is an automated email sent by <a href="https://gettogether.community">https://gettogether.community</a></p>
+	<p>
+		Learn more at <a href="https://github.com/GetTogetherComm/GetTogether/">https://github.com/GetTogetherComm/GetTogether/</a></p>
+    </main>
+</html>

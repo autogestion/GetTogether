@@ -1,0 +1,49 @@
+{% extends "get_together/base.html" %}
+{% load static i18n %}
+
+{% block styles %}
+    <link href="{% static 'css/bootstrap-album.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block content %}
+<div class="fluid-container">
+        <div class="row">
+            <div class="col-12 text-center mb-2">
+                <div class="btn-group" role="group">
+                  <a class="btn {% if not request.user.is_authenticated %}disabled {% endif %}{% if active == 'my'  %}btn-primary{% else %}btn-secondary{% endif %}" href="{% url 'teams' %}">{% trans "My Teams" %}</a>
+                  <a class="btn {% if active == 'all' %}btn-primary{% else %}btn-secondary{% endif %}" href="{% url 'all-teams' %}">{% trans "All Teams" %}</a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+        {% for team in teams %}
+            <div class="col-md-4">
+              <div class="card mb-4 box-shadow">
+                <div class="card-banner">
+                  <a href="{% url 'show-team-by-slug' team.slug %}">
+                  <img class="card-img-top" src="{{team.card_img_url}}" alt="{{team.name}}">
+                  </a>
+                  <p class="card-title">{{team.name}}</p>
+                </div>
+                <div class="card-body">
+                  <p class="card-text"><strong>{{team.city}}</strong></p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">{% blocktrans with member_count=team.members.count %}{{ member_count }} members{% endblocktrans %}</small>
+                    <div class="btn-group">
+                        <a class="btn btn-primary" href="{% url 'show-team-by-slug' team.slug %}">{% trans "View" %}</a></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        {% endfor %}
+        </div>
+        <div class="row">
+            <div class="col">
+                <br/><a href="{% url 'create-team' %}" class="btn btn-success">{% trans "Start a team" %}</a>
+            </div>
+        </div>
+</div>
+
+{% endblock %}
+
